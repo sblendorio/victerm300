@@ -1,4 +1,4 @@
-;term300-2.prg ==1001==
+;victerm300.prg ==1001==
    10 fori=828to844:reada:pokei,a:next
    50 close 5,2,3:print chr$(14);
   100 open 5,2,3,chr$(6):q$=chr$(34)
