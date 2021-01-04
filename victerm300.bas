@@ -1,7 +1,16 @@
-;victerm300.prg ==1001==
+;victerm.prg ==1001==
    10 fori=828to844:reada:pokei,a:next
-   50 close 5,2,3:print chr$(14);
-  100 open 5,2,3,chr$(6):q$=chr$(34)
+   15 print chr$(147)chr$(14)chr$(8)"Choose modem speed:":print
+   20 print"1- 300 BAUD":print"2- 600 BAUD":print"3- 1200 BAUD":print"4- 2400 BAUD"
+   25 geta$:ifa$<"1"ora$>"4"then25
+   30 a=val(a$):onagoto31,32,33,34
+   31 b$=chr$(6):goto40
+   32 b$=chr$(7):goto40
+   33 b$=chr$(8):goto40
+   34 b$=chr$(10):goto40
+   40 print:print"PLEASE WAIT..."
+   95 close 5,2,3
+  100 open 5,2,3,b$:q$=chr$(34)
   110 dim f%(255),t%(255)
   200 for j=32to64:t%(j)=j:next
   210 t%(13)=13:t%(20)=8
@@ -14,8 +23,8 @@
   270 k=t%(j)
   280 if k<>0thenf%(k)=j:f%(k+128)=j
   290 next:f%(12)=147:poke204,0
-  300 print " "chr$(147)
-  305 print "vic terminal 300 baud"
+  300 print " "chr$(147);
+  305 print "VIC Terminal"
   310 get#5,a$
   320 if a$=""or st<>0 then 360
   330 ifpeek(204)=0thensys828
