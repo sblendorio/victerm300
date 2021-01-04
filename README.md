@@ -1,5 +1,5 @@
 # VIC Term 300
-**VICTerm300** is an ASCII Terminal emulator for Commodore VIC-20, written in **BASIC** so it can run just at **300 baud**. It's just a slight improvement to a demo BASIC program printed on the VIC-Modem guide
+**VICTerm300** is an ASCII Terminal emulator for Commodore VIC-20, written in **BASIC** so it can run just at **300 baud**. It's just a slight improvement to a BASIC demo program printed on the VIC-Modem guide
 
 ## Improvements
 Main improvement is the possibility to use the **21th column** of the screen without producing a **spurious newline**. It's done implementing the cursor blinking through **KERNAL routines** instead of simulating it with BASIC instructions.
