@@ -9,6 +9,8 @@ Use `petcat` tool from VICE distribution on your system. Launch:
 
     petcat -w2 -l 1001 -o victerm300.prg victerm300.bas
 
+It will produce the executable file **victerm300.prg**, loadable from VIC-20.
+
 ## Original listing
 This is the original program, which is printed on the VIC-Modem guide:
 ![vicmodem](vicmodem.png)
