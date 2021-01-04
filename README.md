@@ -1,7 +1,6 @@
 # VIC Term 300
 
 VICTerm is an ASCII Terminal emulator for Commodore VIC-20. It's written in BASIC so it can run just at 300 baud.
-
 It's just a slight improvement to a demo BASIC program printed on the VIC-Modem guide
 
 ## Improvements
