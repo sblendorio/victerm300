@@ -6,9 +6,7 @@ Main improvement is the possibility to use the **21th column** of the screen wit
 
 ## How to parse .bas file
 Use `petcat` tool from VICE distribution on your system. Launch:
-
     petcat -w2 -l 1001 -o victerm300.prg victerm300.bas
-
 It will produce the executable file **victerm300.prg**, loadable from VIC-20.
 
 ## Original listing
