@@ -72,7 +72,7 @@ void main(void) {
     choice = ch - '1';
     open_string[0] = baud[choice];
     print("\223VIC Terminal\n\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300");
-    i = cbm_open(5,2,0,open_string);
+    i = cbm_open(5,2,3,open_string);
     put_char(i==0?'0':'1');
     for (;;) {
         put_char('p');
