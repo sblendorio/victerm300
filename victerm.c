@@ -1,28 +1,23 @@
 // cl65 -t vic20 --config vic20-unexpanded.cfg -Cl -O -o victerm.prg victerm.c
 // cl65 -t vic20 --config vic20-32k.cfg -Cl -O -o victerm.prg victerm.c
 #pragma charmap(147, 147)
-//#include <stdlib.h>
-//#include <stdio.h>
-//#include <string.h>
+#include <stdio.h>
 #include <cbm.h>
+#include <peekpoke.h>
 #include <vic20.h>
 
 #define BUFFER_SIZE 32
-
-char ch;
-char *open_string="x";
-char buffer[BUFFER_SIZE];
-int len;
-int i;
 
 void print(char* str);
 void put_char(char ch);
 char kb_hit(void);
 char getkey(void);
 char get(void);
+void cursor_on(void);
+void cursor_off(void);
+int __fastcall__ cbmread(unsigned char lfn, unsigned char* buffer, unsigned int size);
 
 char baud[] = {6, 7, 8, 10}; // 300, 600, 1200, 2400
-char choice;
 char f[] = {
       0,   0,   0, 137,   0,   0,   0,   0,  20,   0,   0,   0, 147,  13,   0,   0,
     146, 134,   0, 138,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
@@ -60,32 +55,60 @@ char t[] = {
       0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
 };
 
+char ch;
+char *open_string="x";
+char buffer[BUFFER_SIZE];
+int len;
+int i;
+char is_petscii;
+
 void main(void) {
+    is_petscii = 0;
     print("\223\016\010Choose modem speed\n\n"
         "1- 300 BAUD\n"
         "2- 600 BAUD\n"
         "3- 1200 BAUD\n"
-        "4- 2400 BAUD");
+        "4- 2400 BAUD\n"
+    );
+    cursor_on();
     do {
         ch = getkey();
     } while (ch < '1' || ch > '4');
-    choice = ch - '1';
-    open_string[0] = baud[choice];
-    print("\223VIC Terminal\n\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300");
-    i = cbm_open(5,2,3,open_string);
-    put_char(i==0?'0':'1');
+    ch = ch - '1';
+    open_string[0] = baud[ch];
+    print("\223VIC Terminal\n"
+          "\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300");
+    cbm_close(1);
+    cbm_open(1,2,3,open_string);
     for (;;) {
-        put_char('p');
-        len = cbm_read(5, buffer, BUFFER_SIZE);
-        put_char('u');
-        for (i=0; i<len; ++i) put_char(buffer[i]);
         ch = get();
         if (ch != 0) {
-            buffer[0] = ch;
-            cbm_write(5, buffer, 1);
+            buffer[0] = is_petscii ? ch : t[ch];
+            cbm_write(1, buffer, 1);
         }
+        len = cbmread(1, buffer, BUFFER_SIZE);
+        if (len > 0) cursor_off();
+        for (i=0; i<len; ++i) {
+            POKE(212,0);
+            put_char(is_petscii ? buffer[i]: f[buffer[i]]);
+        }
+        if (PEEK(204)!=0) cursor_on();
     }
 
+}
+
+
+int __fastcall__ cbmread(unsigned char lfn, unsigned char* buffer, unsigned int size)
+{
+    static unsigned int bytesread;
+    if (cbm_k_chkin(lfn)) return -1;
+    bytesread = 0;
+
+    while (PEEK(667)!=PEEK(668) && bytesread<size)
+        buffer[bytesread++] = cbm_k_getin();
+
+    cbm_k_clrch();
+    return bytesread;
 }
 
 void put_char(char ch) {
@@ -96,7 +119,7 @@ void put_char(char ch) {
 char get(void) {
     if (kb_hit()) {
         asm("jsr $e5cf");
-        return  __A__;
+        return __A__;
     }
     return 0;
 }
