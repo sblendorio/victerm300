@@ -1,6 +1,5 @@
-// cl65 -t vic20 --config vic20-unexpanded.cfg -Cl -O -o victerm.prg victerm.c
-// cl65 -t vic20 --config vic20-32k.cfg -Cl -O -o victerm.prg victerm.c
 #pragma charmap(147, 147)
+#pragma charmap(17, 17)
 #include <stdio.h>
 #include <cbm.h>
 #include <peekpoke.h>
@@ -15,9 +14,10 @@ char getkey(void);
 char get(void);
 void cursor_on(void);
 void cursor_off(void);
+void display_petscii_ascii(void);
+void beep(void);
 int __fastcall__ cbmread(unsigned char lfn, unsigned char* buffer, unsigned int size);
 
-char baud[] = {6, 7, 8, 10}; // 300, 600, 1200, 2400
 char f[] = {
       0,   0,   0, 137,   0,   0,   0,   0,  20,   0,   0,   0, 147,  13,   0,   0,
     146, 134,   0, 138,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
@@ -61,42 +61,85 @@ char buffer[BUFFER_SIZE];
 int len;
 int i;
 char is_petscii;
+char is_black;
+char baud[] = {6, 7, 8, 10}; // 300, 600, 1200, 2400
 
 void main(void) {
     is_petscii = 0;
-    print("\223\016\010Choose modem speed\n\n"
-        "1- 300 BAUD\n"
-        "2- 600 BAUD\n"
-        "3- 1200 BAUD\n"
-        "4- 2400 BAUD\n"
-    );
-    do {
-        ch = getkey();
-    } while (ch < '1' || ch > '4');
-    ch = ch - '1';
-    open_string[0] = baud[ch];
-    print("\223VIC Terminal\n"
-          "\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300");
-    cursor_on();
-    cbm_close(1);
-    cbm_open(1,2,3,open_string);
+    is_black = 0;
+    POKE(0x900E, 0);
     for (;;) {
-        ch = get();
-        if (ch != 0) {
-            buffer[0] = is_petscii ? ch : t[ch];
-            cbm_write(1, buffer, 1);
+        cursor_off();
+        print("\223\016\010Choose modem speed\n\n"
+            "1- 300 BAUD\n"
+            "2- 600 BAUD\n"
+            "3- 1200 BAUD\n"
+            "4- 2400 BAUD\n"
+        );
+        do {
+            ch = getkey();
+        } while (ch < '1' || ch > '4');
+        ch = ch - '1';
+        open_string[0] = baud[ch];
+        display_petscii_ascii();
+        cursor_on();
+        cbm_close(1);
+        cbm_open(1,2,3,open_string);
+        buffer[0] = '\n';
+        cbm_write(1, buffer, 1);
+        for (;;) {
+            ch = get();
+            if (ch == 133)  { // F1
+                is_petscii = !is_petscii;
+                display_petscii_ascii();
+            } else if (ch == 134) { // F3
+                is_black = !is_black;
+                POKE(0x900F, is_black ? 8 : 27);
+                display_petscii_ascii();
+            } else if (ch == 135) { // F5
+                break;
+            } else if (ch == 136) { // F7
+                cursor_off();
+                putchar(is_black ? 5 : 31);
+                print("\n\223\021\021\021\021\021\021\021\021\021\021"
+                      " EXIT: ARE YOU SURE?");
+                cursor_on();
+                ch = getkey();
+                if (ch == 'Y' || ch == 'y') asm("brk");
+                display_petscii_ascii();
+            } else if (ch != 0) {
+                buffer[0] = is_petscii ? ch : t[ch];
+                cbm_write(1, buffer, 1);
+            }
+            len = cbmread(1, buffer, BUFFER_SIZE);
+            if (len > 0) cursor_off();
+            for (i=0; i<len; ++i) {
+                POKE(212, 0);
+                POKE(216, 0);
+                if (buffer[i] == 7) beep();
+                put_char(is_petscii ? buffer[i]: f[buffer[i]]);
+            }
+            if (PEEK(204)!=0) cursor_on();
         }
-        len = cbmread(1, buffer, BUFFER_SIZE);
-        if (len > 0) cursor_off();
-        for (i=0; i<len; ++i) {
-            POKE(212,0);
-            POKE(216,0);
-            put_char(is_petscii ? buffer[i]: f[buffer[i]]);
-        }
-        if (PEEK(204)!=0) cursor_on();
     }
-
 }
+
+void display_petscii_ascii(void) {
+    cursor_off();
+    POKE(212, 0);
+    POKE(216, 0);
+    putchar(is_black ? 5 : 31);
+    print("\n\223\022VIC Terminal          \222"
+        "\n"//////////////////'
+        "F1-PET/ASCII F3-COLOR\n"
+        "F5-SET BAUD  F7-EXIT\n"
+        "\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300");
+    print(is_petscii
+        ? "* Charset: PETSCII\n\n"
+        : "* Charset: ASCII\n\n"
+    );
+}
+
 
 int __fastcall__ cbmread(unsigned char lfn, unsigned char* buffer, unsigned int size)
 {
@@ -149,7 +192,6 @@ out:
     return __A__;
 }
 
-
 void cursor_on(void) {
 	asm("ldy #$00");
 	asm("sty $cc");
@@ -166,4 +208,13 @@ loop:
 exitloop:
 	asm("ldy #$ff");
 	asm("sty $cc");
+}
+
+void beep() {
+    static unsigned long j;
+    POKE(0x900E, 15);
+    POKE(0x900D, 0);
+    POKE(0x900C, 230);
+    for (j=0; j<1000; ++j) asm("nop");
+    POKE(0x900E, 0);
 }
