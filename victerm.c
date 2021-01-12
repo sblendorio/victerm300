@@ -70,7 +70,6 @@ void main(void) {
         "3- 1200 BAUD\n"
         "4- 2400 BAUD\n"
     );
-    cursor_on();
     do {
         ch = getkey();
     } while (ch < '1' || ch > '4');
@@ -78,6 +77,7 @@ void main(void) {
     open_string[0] = baud[ch];
     print("\223VIC Terminal\n"
           "\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300");
+    cursor_on();
     cbm_close(1);
     cbm_open(1,2,3,open_string);
     for (;;) {
