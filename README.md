@@ -12,7 +12,8 @@ Run **build.bat** script, on both **Windows** and **Linux/MacOS** operating syst
 - **victerm.prg**: for *unexpanded* VIC-20s
 - **victerm-expanded.prg**: for *expanded* VIC-20s (from 8K to 32K expansion cartridges)
 - **victerm-exp3k.prg**: for VIC-20s with *3K* expansion
-All those three executables are included in this repo.
+
+All these three executables are included in this repo.
 
 ## Original listing
 This is the original program, which is printed on the VIC-Modem guide:
