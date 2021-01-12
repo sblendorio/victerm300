@@ -90,13 +90,13 @@ void main(void) {
         if (len > 0) cursor_off();
         for (i=0; i<len; ++i) {
             POKE(212,0);
+            POKE(216,0);
             put_char(is_petscii ? buffer[i]: f[buffer[i]]);
         }
         if (PEEK(204)!=0) cursor_on();
     }
 
 }
-
 
 int __fastcall__ cbmread(unsigned char lfn, unsigned char* buffer, unsigned int size)
 {
