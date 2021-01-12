@@ -6,6 +6,7 @@
 - Implemented **ASCII**/**PETSCII** modes
 - In **ASCII** mode, chr(12) implements screen cleaning.
 - Possibility to connect at **300** / **600** / **1200** / **2400** baud
+- Beep when receiving chr(7)
 
 ## How to compile
 Run **build.bat** script, on both **Windows** and **Linux/MacOS** operating systems. **CC65** compiler is required. It will generate three **.prg** executable files:
