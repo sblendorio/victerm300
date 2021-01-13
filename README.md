@@ -19,6 +19,10 @@ Run **build.bat** script, on both **Windows** and **Linux/MacOS** operating syst
 
 All these three executables are included in this repo.
 
+## Credits
+
+Thanks to [**Antonino Porcino**](https://github.com/nippur72/) and [**Fabrizio Caruso**](https://github.com/Fabrizio-Caruso) for their precious suggestions.
+
 ## Screenshot
 
 ![victerm-screenshot](screenshot.png)
