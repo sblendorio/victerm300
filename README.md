@@ -3,6 +3,11 @@
 
 It works under **unexpanded VIC-20**, but also versions for expanded ones are provided.
 
+## Executable files
+- **victerm.prg**: for *unexpanded* VIC-20s
+- **victerm-expanded.prg**: for *expanded* VIC-20s (from **8K to 32K** expansion cartridges)
+- **victerm-exp3k.prg**: for VIC-20s with **3K** expansion
+
 ## Improvements
 - Possibility to use the **21th column** of the screen without producing a **spurious newline**. It's done implementing the cursor blinking through **KERNAL routines** instead of simulating it with BASIC instructions.
 - Implemented **ASCII**/**PETSCII** modes
@@ -12,10 +17,7 @@ It works under **unexpanded VIC-20**, but also versions for expanded ones are pr
 - Toggle **B&W** / **Classic** colors.
 
 ## How to compile
-Run **build.bat** script, on both **Windows** and **Linux/MacOS** operating systems. **CC65** compiler is required. It will generate three **.prg** executable files:
-- **victerm.prg**: for *unexpanded* VIC-20s
-- **victerm-expanded.prg**: for *expanded* VIC-20s (from **8K to 32K** expansion cartridges)
-- **victerm-exp3k.prg**: for VIC-20s with **3K** expansion
+Run **build.bat** script, on both **Windows** and **Linux/MacOS** operating systems. **CC65** compiler is required. It will generate three **.prg** executable files, the ones mentioned above.
 
 All these three executables are included in this repo.
 
