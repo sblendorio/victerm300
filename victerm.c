@@ -5,8 +5,6 @@
 #include <peekpoke.h>
 #include <vic20.h>
 
-#define BUFFER_SIZE 32
-
 void print(char* str);
 void put_char(char ch);
 char kb_hit(void);
@@ -16,7 +14,7 @@ void cursor_on(void);
 void cursor_off(void);
 void display_petscii_ascii(void);
 void beep(void);
-int __fastcall__ cbmread(unsigned char lfn, unsigned char* buffer, unsigned int size);
+int __fastcall__ rs232_read(unsigned char lfn, unsigned char* buffer, unsigned int size);
 
 char f[] = {
       0,   0,   0, 137,   0,   0,   0,   0,  20,   0,   0,   0, 147,  13,   0,   0,
@@ -55,53 +53,68 @@ char t[] = {
       0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
 };
 
+#define BUFFER_SIZE 32
+#define COLOR_COMBOS 4
+
 char ch;
-char *open_string="x";
+char *open_string = "x";
 char buffer[BUFFER_SIZE];
 int len;
 int i;
 char is_petscii;
-char is_black;
-char baud[] = {6, 7, 8, 10}; // 300, 600, 1200, 2400
+char is_start;
+char color_combo;
+char border_background[] = {27, 8, 8, 25};
+char foreground[] = {31, 30, 5, 144};
+char foreground_mem[] = {6, 5, 1, 0};
+char baud[] = {6, 7, 8}; // 300, 600, 1200
 
 void main(void) {
+    is_start = 1;
     is_petscii = 0;
-    is_black = 0;
+    color_combo = 0;
     POKE(0x900E, 0);
     for (;;) {
         cursor_off();
-        print("\223\016\010Choose modem speed\n\n"
-            "1- 300 BAUD\n"
-            "2- 600 BAUD\n"
-            "3- 1200 BAUD\n"
-            "4- 2400 BAUD\n"
+        print("\223\016\010Choose modem speed:\n\n"
+            "1-  300 BAUD (8n1)\n"
+            "2-  600 BAUD (8n1)\n"
+            "3- 1200 BAUD (8n1)\n"
         );
         do {
             ch = getkey();
-        } while (ch < '1' || ch > '4');
+        } while (ch < '1' || ch > '3');
         ch = ch - '1';
         open_string[0] = baud[ch];
         display_petscii_ascii();
         cursor_on();
         cbm_close(1);
         cbm_open(1,2,3,open_string);
-        buffer[0] = '\n';
-        cbm_write(1, buffer, 1);
+        if (is_start) {
+            is_start = 0;
+            buffer[0] = '\n';
+            cbm_write(1, buffer, 1);
+        }
         for (;;) {
             ch = get();
             if (ch == 133)  { // F1
                 is_petscii = !is_petscii;
                 display_petscii_ascii();
             } else if (ch == 134) { // F3
-                is_black = !is_black;
-                POKE(0x900F, is_black ? 8 : 27);
-                display_petscii_ascii();
+                color_combo = (color_combo + 1) % COLOR_COMBOS;
+                POKE(0x900F, border_background[color_combo]);
+                put_char(foreground[color_combo]);
+                #ifdef EXP8K
+                for (i=0x9400; i<=0x95F9; ++i) POKE(i, foreground_mem[color_combo]);
+                #else
+                for (i=0x9600; i<=0x97F9; ++i) POKE(i, foreground_mem[color_combo]);
+                #endif
             } else if (ch == 135) { // F5
                 break;
             } else if (ch == 136) { // F7
                 cursor_off();
-                putchar(is_black ? 5 : 31);
-                print("\n\223\021\021\021\021\021\021\021\021\021\021"
+                putchar(foreground[color_combo]);
+                print("\223\021\021\021\021\021\021\021\021\021\021"
                       " EXIT: ARE YOU SURE?");
                 cursor_on();
                 ch = getkey();
@@ -111,26 +124,24 @@ void main(void) {
                 buffer[0] = is_petscii ? ch : t[ch];
                 cbm_write(1, buffer, 1);
             }
-            len = cbmread(1, buffer, BUFFER_SIZE);
+            len = rs232_read(1, buffer, BUFFER_SIZE);
             if (len > 0) cursor_off();
             for (i=0; i<len; ++i) {
-                POKE(212, 0);
-                POKE(216, 0);
                 if (buffer[i] == 7) beep();
                 put_char(is_petscii ? buffer[i]: f[buffer[i]]);
+                POKE(212, 0);
+                POKE(216, 0);
             }
-            if (PEEK(204)!=0) cursor_on();
+            if (PEEK(204) != 0) cursor_on();
         }
     }
 }
 
 void display_petscii_ascii(void) {
     cursor_off();
-    POKE(212, 0);
-    POKE(216, 0);
-    putchar(is_black ? 5 : 31);
-    print("\n\223\022VIC Terminal          \222"
-        "\n"//////////////////'
+    putchar(foreground[color_combo]);
+    print("\223\022VIC Terminal          \222"
+        "\n"
         "F1-PET/ASCII F3-COLOR\n"
         "F5-SET BAUD  F7-EXIT\n"
         "\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300\300");
@@ -140,8 +151,7 @@ void display_petscii_ascii(void) {
     );
 }
 
-
-int __fastcall__ cbmread(unsigned char lfn, unsigned char* buffer, unsigned int size)
+int __fastcall__ rs232_read(unsigned char lfn, unsigned char* buffer, unsigned int size)
 {
     static unsigned int bytesread;
     if (cbm_k_chkin(lfn)) return -1;
@@ -210,7 +220,7 @@ exitloop:
 	asm("sty $cc");
 }
 
-void beep() {
+void beep(void) {
     static unsigned long j;
     POKE(0x900E, 15);
     POKE(0x900D, 0);
