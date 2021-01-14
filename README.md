@@ -1,5 +1,5 @@
 # VIC Term
-**VICTerm** is an ASCII Terminal emulator for Commodore VIC-20, written in **C** so it can run at **300/600/1200/2400 baud**. It was written initially as a just slight improvement to a BASIC demo program printed on the VIC-Modem guide, then it was ported to C in order to be faster and more realiable.
+**VICTerm** is an ASCII Terminal emulator for Commodore VIC-20, written in **C** so it can run at **300/600/1200/2400 baud**. It was written initially as a just slight improvement to a BASIC demo program printed on the VIC-Modem guide, then it was ported to **C** in order to make it faster and more reliable.
 
 It works under **unexpanded VIC-20**, but also versions for expanded ones are provided.
 
